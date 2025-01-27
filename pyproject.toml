@@ -1,0 +1,18 @@
+[build-system]
+build-backend = 'mesonpy'
+requires = ['meson-python', 'numpy']
+
+[project]
+name = 'wyckoff-solver'
+version = '0.0.1'
+description = 'Our first Python project, using meson-python!'
+readme = 'README.md'
+requires-python = '>=3.8'
+license = {file = 'LICENSE'}
+authors = [
+  {name = 'Xiaoshan Luo', email = 'luoxs@calypso.cn'},
+]
+dependencies = [
+  'numpy',
+  'scipy',
+]
