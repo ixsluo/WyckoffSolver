@@ -1,3 +1,4 @@
+import string
 from importlib import resources
 
 import numpy as np
@@ -19,6 +20,7 @@ class SpaceGroup(ParamEncodeBase, metaclass=ParamSingletonFactory.create_metacla
     def __init__(self, spgno: int):
         if not (1 <= spgno <= 230):
             raise ValueError("spacegroup number must 1 to 230.")
-        self.spgno = spgno
+        self.spgno = self.number = spgno
         self.multiplicity = spg_multiplicity[spgno - 1]
         self.variability = spg_variability[spgno - 1]
+        self.letters = string.ascii_letters[:len(self.multiplicity)][::-1]
