@@ -20,3 +20,17 @@ py3.extension_module(dioph_modulename,
   install : true,
   subdir: 'wyckoff_solver',
 )
+
+py3.install_sources(
+  [
+    'cache.py',
+    'linprog.py',
+    'main.py',
+    'spacegroup.py',
+    'wyckcomb.py',
+  ],
+  subdir: 'wyckoff_solver',
+)
+
+subdir('utils')
+subdir('resources')

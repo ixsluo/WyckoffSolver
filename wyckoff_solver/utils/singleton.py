@@ -5,6 +5,22 @@ from queue import Queue
 from typing import Any
 
 
+class ParamEncodeBase:
+    """Base class to inject parameters coding
+
+    The coding is stored in ``_cls_code`` variable.
+    """
+    def __new__(cls, *args, **kwargs):
+        instance = super().__new__(cls)
+        instance._cls_code = cls.encode_arguments(*args, **kwargs)
+        return instance
+
+    @classmethod
+    @abstractmethod
+    def encode_arguments(cls, *args, **kwargs):
+        raise NotImplemented
+
+
 class ParamSingletonFactory:
     """Factory to create metaclass for Singleton by parameters
 
@@ -13,32 +29,34 @@ class ParamSingletonFactory:
 
     The metaclass is created by ``create_metaclass(name, cache_size)`` method.
 
+    Use in conjuration with ``ParamEncodeBase``, and override the ``encode_arguments``
+    method, which returns a hashable ovject to distinguish each singleton.
+
     Warning
     -------
-    All subclass inherits the created metaclass MUST override the classmethod
-    ``encode_arguments``, which returns a hashable object using the
-    ``inspect.BoundArguments`` instance of __init__ to distinguish each singleton.
+    Arguments names and values in ``__init__`` are passed into ``encode_arguments``.
+    Use those needed. And a ``**kwargs`` is required.
 
     Examples
     --------
     >>> MetaA = ParamSingletonFactory.create_metaclass("A", cache_size=2)
-    >>> class A(metaclass=MetaA):
+    >>> class A(ParamEncodeBase, metaclass=MetaA):
             def __init__(self, a):
-                pass
+                super().__init__(a)
 
             @classmethod
-            def encode_arguments(cls, bound_args):
-                return str(bound_args.arguments['a'])
+            def encode_arguments(cls, a, **kwargs):
+                return str(a)
     >>> A(1) is A(1)
     True
     >>> MetaB = ParamSingletonFactory.create_metaclass("B")
-    >>> class B(metaclass=MetaB):
+    >>> class B(ParamEncodeBase, metaclass=MetaB):
             def __init__(self, b, **kwargs):
-                pass
+                super().__init__(b)
 
             @classmethod
-            def encode_arguments(cls, bound_args):
-                return (str(bound_arguments['b']), frozenset(bound_args.kwargs.items()))
+            def encode_arguments(cls, b, **kwargs):
+                return (str(b), frozenset(kwargs.items()))
     >>> A(1) is B(1)
     False
 
@@ -70,7 +88,7 @@ class ParamSingletonFactory:
                 if not hasattr(cls, "_lock"):
                     cls._lock = threading.Lock()
 
-                cls_code = cls.encode_arguments(bound_args)
+                cls_code = cls.encode_arguments(**bound_args.arguments)
                 key = (cls, cls_code)
                 try:
                     hash(key)
@@ -80,8 +98,6 @@ class ParamSingletonFactory:
                     with cls._lock:
                         if key not in cls._instance:
                             instance = super(type(cls), cls).__call__(*args, **kwargs)
-                            instance._cls_code = cls_code
-                            print(instance._cls_code)
                             if cls._instance_queue.full():
                                 drop_key = cls._instance_queue.get_nowait()
                                 cls._instance.pop(drop_key)
@@ -90,16 +106,12 @@ class ParamSingletonFactory:
                             return instance
                 return cls._instance[key]
 
-            def encode_arguments(cls, bound_args: BoundArguments):
-                raise NotImplemented
-
             new_meta = type(
                 f"ParamSingleton_{name}",
                 (type,),
                 {
                     '__call__': call,
-                    'encode_arguments': classmethod(abstractmethod(encode_arguments)),
-                }
+                },
             )
             cls._metaclass_cache[name] = new_meta
         return cls._metaclass_cache[name]

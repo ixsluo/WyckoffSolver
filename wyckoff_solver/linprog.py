@@ -2,10 +2,8 @@
 
 import math
 import pickle
-import threading
 import warnings
 from collections.abc import Iterator
-from inspect import signature
 from itertools import chain, product
 from pathlib import Path
 from typing import Any, cast, Literal
@@ -18,10 +16,10 @@ from scipy.sparse import csr_array
 from .cache import PROJECT_CACHEDIR
 from .dioph import nonneglindiophsolver_module
 from .utils.hash import hash_uints
-from .utils.singleton import ParamSingletonFactory
+from .utils.singleton import ParamEncodeBase, ParamSingletonFactory
 
 
-class ExBinDivLinSolver(metaclass=ParamSingletonFactory.create_metaclass("ExBinDivLinSolver")):
+class ExBinDivLinSolver(ParamEncodeBase, metaclass=ParamSingletonFactory.create_metaclass("ExBinDivLinSolver")):
     r"""Exclusive Binary Divisible Linear Porgramming Problem
 
     See constrains in notes.
@@ -61,9 +59,8 @@ class ExBinDivLinSolver(metaclass=ParamSingletonFactory.create_metaclass("ExBinD
 
     """
 
-    @staticmethod
-    def encode_arguments(bound_args):
-        a, b, beta = bound_args.arguments['a'], bound_args.arguments['b'], bound_args.arguments['beta']
+    @classmethod
+    def encode_arguments(cls, a, b, beta, **kwargs):
         return hash_uints(chain((len(a), len(b)), a, b, (beta,)))
 
     def __init__(
@@ -72,52 +69,58 @@ class ExBinDivLinSolver(metaclass=ParamSingletonFactory.create_metaclass("ExBinD
         b: npt.NDArray[np.int_] | list[int],
         beta: int,
     ):
-        if not hasattr(self, "_initialized"):
-            self._initialized = True
+        self.a = np.array(a)
+        self.b = np.array(b)
+        self.beta = int(beta)
 
-            self.a = np.array(a)
-            self.b = np.array(b)
-            self.beta = int(beta)
+        self.cachedir = PROJECT_CACHEDIR / f"{self.__class__.__name__}"
+        try:
+            self.cachedir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            warnings.warn(f"Fail to create cache dir: {self.cachedir}. Message: {e}")
+            self.cachefile = None
+        else:
+            self.cachefile = self.cachedir / f"{self._cls_code}.pkl"
 
-            self.cachedir = PROJECT_CACHEDIR / f"{self.__class__.__name__}"
-            try:
-                self.cachedir.mkdir(parents=True, exist_ok=True)
-            except Exception as e:
-                warnings.warn(
-                    f"Fail to create cache dir: {self.cachedir} . Message: {e}"
-                )
-                self.__write_cache = False
-            else:
-                self.__write_cache = True
-            self.cachefile = self.cachedir / f"{self.__eqcode}.pkl"
+        self._solutions: list[tuple[list[list[int]], list[int]]] | None = None
+        self._num_solutions: int | None = None
 
-            if self.cachefile.exists():
-                self.load_solutions()
-            else:
-                self._solutions: list[tuple[list[list[int]], list[int]]] | None = None
-
-    def load_solutions(self):
+    def _load_solutions(self):
         with self.cachefile.open("rb") as f:
-            self._solutions = pickle.load(f)
+            return pickle.load(f)
 
-    def cache_solutions(self, solutions):
+    def _cache_solutions(self):
+        if self._solutions is None:
+            warnings.warn("Solutions not yet been solved. Refuse to cache.")
+            return
         try:
             with self.cachefile.open("wb") as f:
-                pickle.dump(solutions, f)
+                pickle.dump(self._solutions, f)
         except Exception as e:
             warnings.warn(f"Fail to cache solutions to {self.cachefile} . Message: {e}")
 
     @property
     def solutions(self):
         if self._solutions is None:
-            self.solve()
-        if self.__write_cache and not self.cachefile.exists():
-            self.cache_solutions(self._solutions)
+            if self.cachefile is not None and self.cachefile.exists():
+                self._solutions = self._load_solutions()
+            else:
+                self._solutions = self.solve()
+        if self.cachefile is not None and not self.cachefile.exists():
+            self._cache_solutions()
         return self._solutions
 
+    def count_solutions(self):
+        return len(self.solutions)
+
+    @property
+    def num_solutions(self) -> int:
+        if self._num_solutions is None:
+            self._num_solutions = self.count_solutions()
+        return self._num_solutions
+
     def solve(self):
-        self._solutions = list(self.i_solve())
-        return self._solutions
+        return list(self.i_solve())
 
     def i_solve(self) -> Iterator[tuple[list[list[int]], list[int]]]:
         r"""solve the solutions
@@ -168,7 +171,7 @@ class ExBinDivLinSolver(metaclass=ParamSingletonFactory.create_metaclass("ExBinD
         return True
 
 
-class NonNegLinDiophSolver(metaclass=ParamSingletonFactory.create_metaclass("NonNetLinDiophSolver")):
+class NonNegLinDiophSolver(ParamEncodeBase, metaclass=ParamSingletonFactory.create_metaclass("NonNetLinDiophSolver")):
     r"""Non-negative Linear Diophantine Problem
 
     See constrains in notes.
@@ -211,9 +214,8 @@ class NonNegLinDiophSolver(metaclass=ParamSingletonFactory.create_metaclass("Non
         \end{gather*}
     """
 
-    @staticmethod
-    def encode_arguments(bound_args) -> str:
-        a, b = bound_args.arguments['a'], bound_args.arguments['b']
+    @classmethod
+    def encode_arguments(cls, a, b, **kwargs) -> str:
         return hash_uints(chain(a, (b,)))
 
     def __init__(
@@ -231,32 +233,26 @@ class NonNegLinDiophSolver(metaclass=ParamSingletonFactory.create_metaclass("Non
             try:
                 self.cachedir.mkdir(parents=True, exist_ok=True)
             except Exception as e:
-                warnings.warn(
-                    f"Fail to create cache dir: {self.cachedir} . Message: {e}"
-                )
-                self.__can_cache = False
+                warnings.warn(f"Fail to create cache dir: {self.cachedir}. Message: {e}")
+                self.cachefile = None
             else:
-                self.__can_cache = True
-            self.cachefile = self.cachedir / f"{self.__eqcode}.npz"
+                self.cachefile = self.cachedir / f"{self._cls_code}.npz"
 
-            if self.cachefile.exists():
-                self.load_solutions()
-            else:
-                self._solutions: np.ndarray | None = None
+            self._solutions: np.ndarray | None = None
+            self._num_solutions: int | None = None
 
-            self.num_solutions = self.count_solutions()
+    def _load_solutions(self) -> np.ndarray:
+        return scipy.sparse.load_npz(self.cachefile).toarray()
 
-    def load_solutions(self):
-        self._solutions = scipy.sparse.load_npz(self.cachefile).toarray()
-
-    def cache_solutions(self, solutions: np.ndarray):
+    def _cache_solutions(self):
+        if self._solutions is None:
+            warnings.warn("Solutions not yet been solved. Refuse to cache.")
+            return
         try:
-            solutions = csr_array(solutions)
+            solutions = csr_array(self._solutions)
             scipy.sparse.save_npz(self.cachefile, solutions)
         except Exception as e:
-            warnings.warn(
-                f"Fail to cache solutions {solutions} to {self.cachefile} . Message: {e}"
-            )
+            warnings.warn(f"Fail to cache solutions to {self.cachefile}. Message: {e}")
 
     def count_solutions(self, backend: Literal["fortran", "python"] = "fortran"):
         if backend == "fortran":
@@ -281,10 +277,19 @@ class NonNegLinDiophSolver(metaclass=ParamSingletonFactory.create_metaclass("Non
     @property
     def solutions(self) -> np.ndarray:
         if self._solutions is None:
-            self._solutions = self.solve()
-        if self.__can_cache and not self.cachefile.exists():
-            self.cache_solutions(self._solutions)
+            if self.cachefile is not None and self.cachefile.exists():
+                self._solutions = self._load_solutions()
+            else:
+                self._solutions = self.solve()
+        if self.cachefile is not None and not self.cachefile.exists():
+            self._cache_solutions()
         return self._solutions
+
+    @property
+    def num_solutions(self) -> int:
+        if self._num_solutions is None:
+            self._num_solutions = self.count_solutions()
+        return self._num_solutions
 
     def solve(self, backend: Literal["fortran", "python"] = "fortran"):
         if backend == "fortran":
