@@ -25,7 +25,7 @@ py3.install_sources(
   [
     'cache.py',
     'linprog.py',
-    'main.py',
+    'cli.py',
     'spacegroup.py',
     'wyckcomb.py',
   ],
