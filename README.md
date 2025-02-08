@@ -1,89 +1,93 @@
 # Wyckoff Combinations
 
-Let $\bm{p}=(\bm p_i)$ be repeatabilities of sites not repeatable,
-and $\bm{q}=(\bm q_j)$ be repeatabilities of sites repeatable,
-and $\bm{u}=(\bm u_k)$ be number of each element.
+Let $`\boldsymbol{p}=\{\boldsymbol{p}_i\}`$ be multiplicity of sites which is not variable, i.e. cannot be occupied multiple times.
+And $`\boldsymbol{q}=\{\boldsymbol{q}_j\}`$ be multiplicity of sites which is variable, i.e. can be occupied multiple times.
+And $`\boldsymbol{u}=\{\boldsymbol{u}_k\}`$ be number of each element.
 
-Let $\hat{\bm{p}}$ and $\hat{\bm{q}}$ are solves.
+Let one solutions is formed by $`\hat{\boldsymbol{p}}`$ and $`\hat{\boldsymbol{q}}`$, which are occupied times on each site categoried by variability, respectively.
 
-To reduce number of variable, sites with same multiplicity in $\bm{b}$ can be merged together.
+To reduce number of variable, sites with same multiplicity in $`\boldsymbol{b}`$ can be merged together.
 
-Equations:
-$$
-\bm{p}_i\hat{\bm{p}}_{ki} + \bm{q}_j\hat{\bm{q}}_{kj} = \bm u_k, \quad k=0,1,... \\
-0 \le \hat{\bm{p}}_{ki} \le 1, \quad k,i=0,1,... \\
-\sum_{k}\hat{\bm{p}}_{ki} \le 1, \quad j=0,1,... \\
-\hat{\bm{q}}_{kj} \ge 0 \quad k,j=0,1,... \\
-$$
+The solutions should satisfies:
+
+```math
+\begin{cases}
+\boldsymbol{p}_i \hat{\boldsymbol{p}}_{ki} + \boldsymbol{q}_j \hat{\boldsymbol{q}}_{kj} = \boldsymbol{u}_k, \quad k=0,1,\cdots \\
+0 \le \hat{\boldsymbol{p}}_{ki} \le 1, \quad k,i=0,1,\cdots \\
+\sum_{k}\hat{\boldsymbol{p}}_{ki} \le 1, \quad k=0,1,\cdots \\
+\hat{\boldsymbol{q}}_{kj} \ge 0 \quad k,j=0,1,\cdots\ .
+\end{cases}
+```
 
 -----------
 
-Discuss $\bm{p}$ first. Let $\beta=\text{gcd}(\bm{q})$,
+Our discussion begins from $`\boldsymbol{p}`$. Let $`\beta=\gcd(\boldsymbol{q})`$, immediately we have
 
-$$
-\beta | \bm{u}_k - \bm{p}_i\hat{\bm{p}}_{ki}, \quad k=0,1,... \\
-0 \le \hat{\bm{p}}_{ki} \le 1, \quad k,i=0,1,... \\
-\sum_{k}\hat{\bm{p}}_{ki} \le 1, \quad j=0,1,... \\
-$$
+```math
+\beta | \boldsymbol{u}_k - \boldsymbol{p}_i\hat{\boldsymbol{p}}_{ki}, \quad k=0,1,\cdots \ .
+```
 
-calling exclusive binary divisible linear programming problem,
+This is called an **Exclusive Binary Divisible Linear Programming problem**. All $`\hat{\boldsymbol{p}}`$ can be easily solved.
 
-we can easily solve all $\hat{\bm{p}}$. We note $\bm{u}^p=(\bm{p}_i\hat{\bm{p}}_{ki})$, and $\bm{u}^q=\bm{u} - \bm{u}^p$
+
 
 ----------
 
-Then discuss $\bm{q}$, the constrains becomes
+Then, we solve the corresponding solutions $`\hat{\boldsymbol{q}}`$ for each $`\hat{\boldsymbol{p}}`$.
 
-$$
-\bm{q}_j\hat{\bm{q}}_{kj} = \bm{u}^b_k, \quad k=0,1,...\\
-\hat{\bm{q}}_{kj} \ge 0, \quad k,j=0,1,... \\
-$$
+Denote $`\boldsymbol{u}^p:=\boldsymbol{p}_i\hat{\boldsymbol{p}}_{ki}`$ and $`\boldsymbol{u}^q:=\boldsymbol{u} - \boldsymbol{u}^p`$. Take one solution of $`\hat{\boldsymbol{p}}`$, then $`\boldsymbol{u}^q`$ is known. The constrains become
 
-For simplarity, we can collect all $\bm{q}_j$ which have the same value,
-then reduce $\bm{q}_j$ and $\bm{u}^q_k$ by $\beta$, resulting in $\bm{q}^{*}_j$ and $\bm{u}^{*q}_k$.
+```math
+\begin{cases}
+\boldsymbol{q}_j\hat{\boldsymbol{q}}_{kj} = \boldsymbol{u}^q_k, \quad k=0,1,\cdots \\
+\hat{\boldsymbol{q}}_{kj} \ge 0 \quad k,j=0,1,\cdots\ .
+\end{cases}
+```
 
-This operation will not change the solutions and the form of the equations.
+We can reduce $`\boldsymbol{q}_j`$ and $`\boldsymbol{u}^q_k`$ by $`\beta`$. These will not change the solutions and the form of the equations. For simplarity, we collect all $`\boldsymbol{q}_j`$ which have the same value to get the solution of total values $`\tilde{\boldsymbol{q}}_{kj}`$ of them. Use combination to unpack them latter.
 
-The constrains become
+Denote the reduced and collected coefficients are $`\boldsymbol{q}^{\prime}_j`$ and $`\boldsymbol{u}^{\prime q}_k`$. The constrains become
 
-$$
-\bm{q}^{*}_j\hat{\bm{q}}^{*}_{kj} = \bm{u}^{*q}_k, \quad k=0,1,...\\
-\hat{\bm{q}}^{*}_{kj} \ge 0, \quad k,j=0,1,... \\
-\bm{q}^{*}_0 > \bm{q}^{*}_1 > ... \\
-$$
+```math
+\begin{cases}
+\boldsymbol{q}^{\prime}_j\tilde{\boldsymbol{q}}_{kj} = \boldsymbol{u}^{\prime q}_k, \quad k=0,1,... \\
+\tilde{\boldsymbol{q}}_{kj} \ge 0 \quad k,j=0,1,\cdots \ .
+\end{cases}
+```
 
-these are $k$ independent non-negative linear diophantine problems.
+These are $`k`$ independent **Non-Negative Linear Diophantine Problems**.
 
 The generation function is
 
-$$
-G(x) = \prod_{j} (1 + x^{\bm{q}^{*}_j} + x^{2\bm{q}^{*}_j} + ...) \
-$$
+```math
+G(x) = \prod_{j}(1 + x^{\boldsymbol{q}^{\prime}_j} + x^{2\boldsymbol{q}^{\prime}_j} + \cdots)
+```
 
-the number of sulutions for $\bm{u}^{*q}_{k}$ equals to the coefficients of term $x^{\bm{u}^{*q}_{k}}$ in $G(x)$.
+
+the number of sulutions for $`\boldsymbol{u}^{\prime q}_{k}`$ equals to the coefficients of term $`x^{\boldsymbol{u}^{\prime q}_{k}}`$ in $`G(x)`$.
 
 Using dynamic programming method to count the number of solutions, and backtracing method to find all solutions.
 
-Note that reversed-sorted $\bm{q}^{*}$ can improve performance.
+Note: use reversed-sorted $`\boldsymbol{q}^{\prime}`$ can accelerate computation.
 
 ---------
-Last, for each solutions, unpacking the collected same values by each solution term falls back to a series of integer partition problems.
+Finally, for each collected solution $`\tilde{\boldsymbol{q}}_{kj}`$, unpacking them falls back to a series of **Integer Partition Problems**.
 
-Assume the original $\bm{q}_j$ has $v$ repeated times, the target constant term is $\hat{\bm{q}}^{*}_{kj}$.
+Assume the original $`\boldsymbol{q}_j`$ has $`v`$ repeated times. The solution $`\hat{\boldsymbol{q}}_{kj}`$ divides into $`\{\hat{\boldsymbol{q}}_{kjl}|l=1,\cdots,v\}`$. It satisfies
 
-The equation is
+```math
+\begin{cases}
+\sum_{l=1}^v{\hat{\boldsymbol{q}}_{kjl}} = \tilde{\boldsymbol{q}}_{kj} \\
+\hat{\boldsymbol{q}}_{kjl} \ge 0 \quad k,j=0,1,\cdots \ .
+\end{cases}
+```
 
-$$
-\sum_{l=1}^v{\hat{\bm{q}}_{kjl}} = \hat{\bm{q}}^{*}_{kj} \\
-\hat{\bm{q}}_{kjl} \ge 0 \\
-$$
+It also is a **Non-Negative Linear Diophantine Problem** with all coeficients are 1. The generation function
 
-It also is a non-negative linear diophantine equation with all coeficients are 1. The generation function
+```math
+G(x) = (1 + x + x^2 + ... + x^{\tilde{\boldsymbol{q}}_{kj}})^v
+```
 
-$$
-G(x) = (1 + x + x^2 + ... + x^{\hat{\bm{q}}^{*}_{kj}})^v
-$$
-
-the number of solutions is $\text{C}_{v - 1 + \hat{\bm{q}}^{*}_{kj}}^{v-1}$.
+the number of solutions is $`\text{C}_{v - 1 + \tilde{\boldsymbol{q}}_{kj}}^{v-1}`$.
 
 Also use backtracking method to get all solutions.
