@@ -51,7 +51,7 @@ class WyckCombSolver:
 
     Examples
     --------
-    >>> from calypso.math.symmetry.wyckcomb import WyckCombSolver
+    >>> from wyckoff_solver.wyckcomb import WyckCombSolver
     >>> group = 23
     >>> num_atoms = [8, 4, 16]
     >>> solver = WyckCombSolver(group, num_atoms)

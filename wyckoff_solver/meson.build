@@ -23,6 +23,7 @@ py3.extension_module(dioph_modulename,
 
 py3.install_sources(
   [
+    '__init__.py',
     'cache.py',
     'linprog.py',
     'cli.py',

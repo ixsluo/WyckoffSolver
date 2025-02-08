@@ -74,7 +74,7 @@ class ParamSingletonFactory:
         return cls._instance
 
     @classmethod
-    def create_metaclass(cls, name: str, cache_size=0):
+    def create_metaclass(cls, name: str, cache_size=0) -> type:
         if name not in cls._metaclass_cache:
 
             def call(cls, *args, **kwargs):

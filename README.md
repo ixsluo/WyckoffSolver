@@ -1,5 +1,53 @@
 # Wyckoff Combinations
 
+Solve the wyckoff combinations for a give number of elements.
+
+## Installation
+
+```bash
+git clone https://github.com/ixsluo/WyckoffSolver.git
+cd WyckoffSolver
+pip install .
+# uninstal
+pip uninstall wyckoff_solver
+```
+
+## Usage
+
+- From command line
+
+    Get the number of total solutions for number of atoms [8,4,16] in space group 23:
+
+    ```bash
+    wyckoffsolver solve 8 4 16 -g 23
+    # There are 150840 different solutions
+    ```
+
+    Get one solution:
+
+    ```bash
+    # get a random one
+    wyckoffsolver getone 8 4 16 -g 23
+    # or get a specific one ([-i 0] for the first one)
+    wyckoffsolver getone 8 4 16 -g 23 -i 0
+    ```
+
+- As python lib
+
+    ```python
+    from wyckoff_solver import WyckCombSolver
+
+    solver = WyckCombSolver(group=23, num_atoms=[8, 4, 16])
+    print(solver.num_solutions)
+    # 150840
+    print(solver.get_solution(0))
+    # array([[0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0],
+    #        [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+    #        [0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0]], dtype=uint16)
+    ```
+
+## Implementation
+
 Let $`\boldsymbol{p}=\{\boldsymbol{p}_i\}`$ be multiplicity of sites which is not variable, i.e. cannot be occupied multiple times.
 And $`\boldsymbol{q}=\{\boldsymbol{q}_j\}`$ be multiplicity of sites which is variable, i.e. can be occupied multiple times.
 And $`\boldsymbol{u}=\{\boldsymbol{u}_k\}`$ be number of each element.
@@ -29,9 +77,7 @@ Our discussion begins from $`\boldsymbol{p}`$. Let $`\beta=\gcd(\boldsymbol{q})`
 
 This is called an **Exclusive Binary Divisible Linear Programming problem**. All $`\hat{\boldsymbol{p}}`$ can be easily solved.
 
-
-
-----------
+-----------
 
 Then, we solve the corresponding solutions $`\hat{\boldsymbol{q}}`$ for each $`\hat{\boldsymbol{p}}`$.
 
@@ -63,14 +109,13 @@ The generation function is
 G(x) = \prod_{j}(1 + x^{\boldsymbol{q}^{\prime}_j} + x^{2\boldsymbol{q}^{\prime}_j} + \cdots)
 ```
 
-
 the number of sulutions for $`\boldsymbol{u}^{\prime q}_{k}`$ equals to the coefficients of term $`x^{\boldsymbol{u}^{\prime q}_{k}}`$ in $`G(x)`$.
 
 Using dynamic programming method to count the number of solutions, and backtracing method to find all solutions.
 
 Note: use reversed-sorted $`\boldsymbol{q}^{\prime}`$ can accelerate computation.
 
----------
+-----------
 Finally, for each collected solution $`\tilde{\boldsymbol{q}}_{kj}`$, unpacking them falls back to a series of **Integer Partition Problems**.
 
 Assume the original $`\boldsymbol{q}_j`$ has $`v`$ repeated times. The solution $`\hat{\boldsymbol{q}}_{kj}`$ divides into $`\{\hat{\boldsymbol{q}}_{kjl}|l=1,\cdots,v\}`$. It satisfies

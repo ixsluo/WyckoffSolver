@@ -18,4 +18,4 @@ dependencies = [
 ]
 
 [project.scripts]
-wycksolver = 'wyckoff_solver.cli:main'
+wyckoffsolver = 'wyckoff_solver.cli:main'
